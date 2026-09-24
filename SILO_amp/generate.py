@@ -66,7 +66,6 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     config.training_device = args.device
     config.do_inference = True
     config.self_improvement_learning["devices_for_workers"] = [args.device]
-    config.self_improvement_learning["beam_width"] = 32
 
     network = SequenceTransformer(config, config.training_device)
     set_seed(args.seed)
