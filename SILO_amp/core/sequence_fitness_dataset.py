@@ -246,11 +246,12 @@ def async_sbs_worker(config: Config, job_pool: JobPool, network_weights: dict,
             idx_list = [i for i, _ in batch]
             root_nodes = [instance for _, instance in batch]
 
-            seed = make_seed(base_seed=config.seed, sampling_round=sampling_round, batch_idx=idx_list[0],)
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            torch.cuda.manual_seed_all(seed)
+            if config.do_inference:
+                seed = make_seed(base_seed=config.seed, sampling_round=sampling_round, batch_idx=idx_list[0],)
+                random.seed(seed)
+                np.random.seed(seed)
+                torch.manual_seed(seed)
+                torch.cuda.manual_seed_all(seed)
 
             if config.self_improvement_learning["search_type"] == "beam_search":
                 # Deterministic beam search.
