@@ -24,9 +24,10 @@ git clone https://github.com/grimmlab/silo-amp-design.git
 cd silo-amp-design
 ```
 
-## 1.2. Environment and Installation
+### 1.2. Environment and Installation
 
 SILO uses `uv` for Python dependency management. The Python dependencies are defined in `pyproject.toml` and are installed automatically when running the inference pipeline. However, MMseqs2 is required for sequence similarity evaluation and **must be installed separately**.
+
 ### 1. Install MMseqs2
 On Linux, MMseqs2 can be installed using Conda:
 
@@ -82,6 +83,8 @@ These commands loads the pretrained SILO policy, generates the peptide library, 
 
 **Important:** Run the command from the repository root to ensure that all relative paths to model assets, reference datasets, and configuration files resolve correctly.
 
+---
+
 ## 2. Repository Structure
 
 The repository is organized into separate directories for training, inference, generated artifacts, and submission verification.
@@ -130,7 +133,7 @@ silo-amp-design/
 └── verify_submission.py
 ```
 
-### Directory descriptions
+### 2.1. Directory descriptions
 
 | Directory or file | Description |
 |---|---|
@@ -142,7 +145,7 @@ silo-amp-design/
 | `README.md` | Documentation for installation, inference, training, and submission verification. |
 | `verify_submission.py` | Entry point for verifying the competition submission. |
 
-### SILO_amp package
+### 2.2. SILO_amp package
 
 The `SILO_amp` directory contains the implementation of the generative policy, stochastic beam search, sequence evaluation, and self-imitation learning.
 
@@ -163,7 +166,7 @@ The `SILO_amp` directory contains the implementation of the generative policy, s
 | `training/` | SILO training utilities and associated training datasets. |
 | `data/` | Reference FASTA files used for candidate filtering and sequence novelty checks. |
 
-**Module execution**
+*** Module execution**
 
 The SILO implementation is organized as a Python module. All main entry points should therefore be executed from the repository root using Python's module syntax.
 
@@ -220,6 +223,8 @@ python -m pip install -e .
 
 This installs the project in editable mode using the configuration defined in `pyproject.toml`. Editable installation allows the `SILO_amp` package to be imported directly while preserving the repository structure. Ensure that MMseqs2 are installed and accessible in the environment.
 
+---
+
 ## 4. Method Overview
 
 SILO is an iterative optimization framework that improves a generative protein design policy by learning from its own high-performing solutions.
@@ -274,7 +279,7 @@ Dataset references:
 
 After merging, deduplication, and length filtering, the resulting pretraining dataset contained **21,881 unique antimicrobial peptide sequences.** The curated dataset was used to pretrain the transformer-based generative policy before SILO optimization.
 
-### 5.3. Pretraining implementation
+### 5.2. Pretraining implementation
 
 The pretraining utilities are located in:
 
@@ -307,7 +312,7 @@ The evaluated activity profiles include:
 
 These activity profiles are used to construct the different candidate selection pools.
 
-### 6.3. AMP likelihood prediction
+### 6.2. AMP likelihood prediction
 
 Candidate sequences are additionally evaluated using OmegAMP. OmegAMP provides machine learning-based AMP likelihood scores, which are recorded as complementary indicators of predicted antimicrobial peptide characteristics. The OmegAMP implementation and associated model assets are located in:
 
@@ -316,7 +321,7 @@ SILO_amp/OmegAMP/
 
 ```
 
-### 6.4. Initial sequence filtering
+### 6.3. Initial sequence filtering
 
 Generated sequences for 50K library are filtered to satisfy the following requirements:
 
@@ -336,7 +341,7 @@ SILO_amp/data/training.fasta
 This initial filtering step prevents exact duplication of sequences already present in the designated reference datasets.
 
 
-### 6.5. Physicochemical property calculation
+### 6.4. Physicochemical property calculation
 
 The physicochemical properties of generated peptides are computed using the modlamp library and additional sequence-based calculations.
 
@@ -354,6 +359,8 @@ The evaluated properties include:
 | Consecutive glycine content | Presence of consecutive glycine residues within the sequence. |
 
 These properties are used to filter candidates before final sequence selection.
+
+---
 
 
 ## 7. Final Candidate Filtering and Selection
@@ -411,9 +418,7 @@ Candidate sequences are compared against the `antibacterial.fasta` reference dat
 
 **Diversity within the selected library**
 
-Each candidate is also compared against all previously selected candidates, including those selected from other activity categories.
-A candidate is rejected if its local sequence similarity to any previously selected sequence strictly exceeds the configured diversity threshold.
-This procedure reduces redundancy within the final library while retaining candidates with distinct predicted antimicrobial activity profiles.
+Each candidate is also compared against all previously selected candidates, including those selected from other activity categories. A candidate is rejected if its local sequence similarity to any previously selected sequence strictly exceeds 0.60. This procedure reduces redundancy within the final library while retaining candidates with distinct predicted antimicrobial activity profiles.
 
 ### 7.4. Final submission
 
@@ -486,48 +491,16 @@ python -m SILO_amp.main \
 ## 10. Citation and Acknowledgements
 
 If you use SILO for AMP, please cite the associated SILO paper:
-
 **Self-Improvement Imitation with Biologically Guided Search for Protein Design Under Oracle Budgets**
-
 [https://arxiv.org/abs/2605.26690](https://arxiv.org/abs/2605.26690)
 
 The implementation builds on or incorporates ideas, methods, and software from the following projects:
-
-### SILO
-
-[https://github.com/grimmlab/SILO](https://github.com/grimmlab/SILO)
-
-The original SILO framework for self-improvement imitation learning and protein sequence optimization.
-
-### Gumbeldore
-
-[https://github.com/grimmlab/gumbeldore](https://github.com/grimmlab/gumbeldore)
-
-Incremental stochastic beam-search methodology and candidate generation.
-
-### Stochastic Beam Search
-
-[https://github.com/wouterkool/stochastic-beam-search](https://github.com/wouterkool/stochastic-beam-search)
-
-Stochastic beam-search methodology and reference implementation.
-
-### APEX Pathogen
-
-[APEX Pathogen GitLab repository](https://gitlab.com/machine-biology-group-public/apex-pathogen)
-
-Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
-
-### OmegAMP
-
-[OmegAMP paper](https://openreview.net/forum?id=hAq3XLZ9ex)
-
-AMP classification and likelihood scoring for generated peptide sequences.
-
-### AMP Challenge 2027
-
-[https://github.com/szczurek-lab/amp-challenge-2027](https://github.com/szczurek-lab/amp-challenge-2027)
-
-Competition resources and submission specifications.
+- [SILO] (https://github.com/grimmlab/SILO): The original SILO framework for self-improvement imitation learning and protein sequence optimization.
+- [Gumbeldore](https://github.com/grimmlab/gumbeldore): Initial self improvement learning framework.
+- [Stochastic Beam Search](https://github.com/wouterkool/stochastic-beam-search): Stochastic beam-search methodology and reference implementation.
+- [APEX Pathogen] (https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
+- [OmegAMP](https://openreview.net/forum?id=hAq3XLZ9ex): AMP classification and likelihood scoring for generated peptide sequences.
+- [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027): Competition resources and submission specifications.
 
 ---
 
