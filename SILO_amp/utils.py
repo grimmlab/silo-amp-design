@@ -18,12 +18,6 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 
-def set_mlflow_connection():
-    os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://0.0.0.0:5001" 
-    remote_server_uri = "http://0.0.0.0:5001"  # "http://10.154.6.32:5100"  # set to MLFlow server URI (host ip and PORT in .env)
-    mlflow.set_tracking_uri(remote_server_uri)
-
-
 def save_checkpoint(checkpoint: dict, filename: str, config: SequenceConfig):
     os.makedirs(config.results_path, exist_ok=True)
     path = os.path.join(config.results_path, filename)
