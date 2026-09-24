@@ -126,6 +126,7 @@ class PeptideChecks:
         self.reference_fasta_path = config.antibacterial_fasta
         self.reference_sequences = read_fasta_sequences(self.reference_fasta_path)
         self.marlys_reference = read_fasta_sequences(config.marlys_fasta)
+        self.training_data = read_fasta_sequences(config.training_fasta)
         self.STANDARD_AMINO_ACIDS = STANDARD_ALPHABET
            
     def basic_validity_mask(self, 
@@ -141,7 +142,8 @@ class PeptideChecks:
                 and set(seq['peptide']).issubset(self.STANDARD_AMINO_ACIDS)
                 and seq['peptide'] not in seen
                 and seq['peptide'] not in self.reference_sequences
-                and seq['peptide'] not in self.marlys_reference)
+                and seq['peptide'] not in self.marlys_reference
+                and seq['peptide'] not in self.training_data)
             
             mask.append(valid)
 
@@ -158,7 +160,7 @@ class BigLibraryMetrics:
     def calculate_metrics_big_library(self, config, path_to_generated_peptides):
 
         """
-            Calculate sequence based metrics (Uniqueness, Diversity), MIC calculation, AMP probability from OmegAMP, and synthesizability related properties
+            Calculate MIC calculation, AMP probability from OmegAMP, and synthesizability related properties
         """
 
         print("------")
@@ -212,9 +214,8 @@ class BigLibraryMetrics:
         marlys_results = mmseqs_marlys_similarity(config=config, query_fasta=path_to_generated_peptides, marlys_fasta=config.marlys_fasta)
         mmseqs_df = pd.DataFrame.from_dict(marlys_results, orient="index").reset_index(drop=True)
         generated_df = (generated_df.merge(apex_df, on="id", how="left", validate="one_to_one").merge(omegaamp_df, on="id", how="left", validate="one_to_one").merge(mmseqs_df, on="id", how="left", validate="one_to_one").merge(property_df, on="id", how="left", validate="one_to_one"))
-        generated_df_path = os.path.join(config.results_path, "generated_50k.csv")
-
-        generated_df.to_csv(generated_df_path)
+        #generated_df_path = os.path.join(config.results_path, "generated_50k.csv")
+        #generated_df.to_csv(generated_df_path)
 
         return generated_df
     
