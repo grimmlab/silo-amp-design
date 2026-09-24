@@ -46,21 +46,20 @@ This automatically creates the project virtual environment and installs the depe
 
 ### 1.3. Prepare the pretrained checkpoint
 
-Place the supplied competition checkpoint in the designated checkpoint directory:
+To download the model checkpoint in the designated checkpoint directory:
 
-```text
-inference_model/
-└── best_model.pt
+```bash
+chmod +x download_model.sh
+./download_model.sh
+
 ```
-
-The checkpoint contains the pretrained SILO policy used for competition inference. The model weights are provided separately because of their file size. The checkpoint should be placed in the expected directory before running the inference pipeline.
 
 ### 1.4. Verify submission
 
 The organizers can either run the following command for inference or run the uv run verify_submission.py as an additional entry point for checking the generated submission artifacts:
 
 ```bash
- uv run python verify_submission.py https://github.com/ashi198/silo-amp-design.git
+ uv run python verify_submission.py https://github.com/grimmlab/silo-amp-design.git
 
 ```
 or 
