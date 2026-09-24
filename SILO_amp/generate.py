@@ -35,7 +35,7 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
 
     """Generate, select, and write candiates using the SILO."""
 
-    checkpoint_path = args.checkpoint
+    checkpoint_path = project_root.parent / "generate" / "best_model.pt"
     output_dir = args.output_dir
     output_path = Path(args.output_dir)
     if not output_path.is_absolute():
