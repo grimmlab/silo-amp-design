@@ -66,9 +66,12 @@ class SequenceEvaluator:
     
 class PeptideChecks:
     def __init__(self, config):
+        STANDARD_ALPHABET = frozenset("ACDEFGHIKLMNPQRSTVWY")
         self.config = config
         self.reference_fasta_path = config.antibacterial_fasta
         self.reference_sequences = read_fasta_sequences(self.reference_fasta_path)
+        self.marlys_reference = read_fasta_sequences(config.marlys_fasta)
+        self.training_data = read_fasta_sequences(config.training_fasta)
         self.STANDARD_AMINO_ACIDS = STANDARD_ALPHABET
            
     def basic_validity_mask(self, 
@@ -83,20 +86,13 @@ class PeptideChecks:
                 min_length <= len(seq['peptide']) <= max_length
                 and set(seq['peptide']).issubset(self.STANDARD_AMINO_ACIDS)
                 and seq['peptide'] not in seen
-                and seq['peptide'] not in self.reference_sequences)
+                and seq['peptide'] not in self.reference_sequences
+                and seq['peptide'] not in self.marlys_reference
+                and seq['peptide'] not in self.training_data)
             
             mask.append(valid)
 
         return mask
-    
-    def synthesis_based_masking(self, candidates):
-        mask: list[bool] = []
-        for seq in candidates:
-            valid = check_amp_synthesizability(sequence=seq['peptide'])
-            mask.append(valid)
-
-        valid_sequences = [sequence for sequence, valid in zip(candidates, mask) if valid]
-        return valid_sequences
     
 @dataclass(frozen=True)
 class SelectionPolicy:
@@ -245,6 +241,7 @@ def select_candidates(
         raise ValueError("top_k must be positive")
     reference_set = set([sequence for _, sequence in references])
     marlys_set = set(marlys_references)
+    trainings_set = set([sequence for _, sequence in training_amps])
 
     result = SelectionResult(selected=[], valid_50k=[])
     seen: set[str] = set()
@@ -255,7 +252,7 @@ def select_candidates(
         candidate = dict(raw)
         candidate_id = str(candidate.get("id", "<missing-id>"))
         sequence = candidate.get("sequence")
-        basic_reason = _valid_basic(candidate, reference_set, marlys_set, policy)
+        basic_reason = _valid_basic(candidate, reference_set, marlys_set, trainings_set, policy)
         if basic_reason:
             _inc(result, candidate_id, basic_reason)
             continue
@@ -282,11 +279,10 @@ def select_candidates(
     # Broad-spectrum pool:
     # Similar GP and GN MIC50 values and low overall MIC90.
     broad_pool = sorted([x for x in top_valid if (min(x["apex_GP_mic50"], x["apex_GN_mic50"]) / max(x["apex_GP_mic50"], x["apex_GN_mic50"])) >= 0.9  
-                   and x["apex_mic90"] <= activity_threshold],   key=lambda x: (
+                   and x["apex_mic90"] <= activity_threshold], key=lambda x: (
         # Most important: activity across many strains
         (x["apex_mic90"]), str(x["sequence"]),),)
     
-
     # Selection for GP pool
     # Prioritize lower GP MIC90, then selectivity.
     gp_pool = sorted(
@@ -345,10 +341,7 @@ def select_candidates(
 
     # GP-selective fallback
     # If the initial GP pool is too small, extend it with
-    # additional candidates satisfying the GP MIC50 criterion.
-    #
-    # Do not slice the fallback pool to the remaining quota.
-    # Some candidates may fail novelty or diversity checks.
+    # additional candidates satisfying the apex_gram_positive_mean criterion.
 
     if len(gp_pool) < quotas["GP_selective"]:
         existing_gp_sequences = {str(x["sequence"]) for x in gp_pool}
@@ -357,10 +350,10 @@ def select_candidates(
                 x for x in top_valid
                 if str(x["sequence"]) not in existing_gp_sequences
                 and x["gram_positive_selectivity"] < 0.8
-                and x["apex_GP_mic50"] <= activity_threshold
+                and x["apex_gram_positive_mean"] <= activity_threshold
             ],
             key=lambda x: (
-                x["apex_GP_mic50"],              # fallback: lower MIC50 is better
+                x["apex_gram_positive_mean"],              # fallback: lower apex_gram_positive_mean is better
                 x["gram_positive_selectivity"],
                 str(x["sequence"]),
             ),
@@ -391,18 +384,17 @@ def select_candidates(
 
     # Broad-spectrum fallback
     # Preserve the original broad_pool.
-    # If it is too small, extend it with MIC50-eligible
-    # broad-spectrum candidates.
+    # If it is too small, extend it with mean-mic-eligible broad-spectrum candidates.
 
     if len(broad_pool) < quotas["broad_spectrum"]:
         existing_broad_sequences = {str(x["sequence"]) for x in broad_pool}
 
         bs_fallback = sorted([x for x in top_valid if (str(x["sequence"]) not in existing_broad_sequences) and 
                               (min(x["apex_GP_mic50"], x["apex_GN_mic50"]) / max(x["apex_GP_mic50"], x["apex_GN_mic50"])) >= 0.9  
-                   and x["apex_mic50"] <= activity_threshold],   
+                   and x["apex_mean_mic"] <= activity_threshold],   
                    key=lambda x: (
         # Most important: activity across many strains
-        (x["apex_mic50"]), str(x["sequence"]),),)
+        (x["apex_mean_mic"]), str(x["sequence"]),),)
 
         broad_pool.extend(bs_fallback)
 
@@ -453,7 +445,7 @@ def select_candidates(
     return result
 
 
-def _valid_basic(candidate: Mapping[str, Any], references: set[str], marlys_set: set[str], policy: SelectionPolicy) -> str | None:
+def _valid_basic(candidate: Mapping[str, Any], references: set[str], marlys_set: set[str], training_set:set[str], policy: SelectionPolicy) -> str | None:
     sequence = candidate.get("sequence")
     if not isinstance(sequence, str):
         return "invalid_sequence"
@@ -465,6 +457,8 @@ def _valid_basic(candidate: Mapping[str, Any], references: set[str], marlys_set:
         return "antibacterial.fasta_exact_match"
     if sequence in marlys_set:
         return "marlys_database_exact_match"
+    if sequence in training_set:
+        return "training_set_exact_match"
     return None
 
 
