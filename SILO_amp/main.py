@@ -4,10 +4,9 @@ import numpy as np
 from .config import SequenceConfig
 from .model.transformer_architecture import SequenceTransformer, dict_to_cpu
 from .sequence_evaluator import SequenceEvaluator
-from .utils import save_checkpoint, train_for_one_cycle, set_seed, set_mlflow_connection
+from .utils import save_checkpoint, train_for_one_cycle, set_seed
 from .evaluation_metrics.utils import read_fasta_return_sequence_list
 from .generate import run_inference
-import mlflow
 from torch.optim.lr_scheduler import LambdaLR
 
 def parse_args():
@@ -26,17 +25,16 @@ def parse_args():
     
     parser.add_argument("--device",
                         type=str,
-                        default='cuda:1',
+                        default='cuda:0',
                         help="specify device name: either cuda:gpu_num (cuda:0) or cpu")
     
     parser.add_argument("--results",
                         type=str,
-                        default="./results/with_double_aa",
+                        default="./results/",
                         help="specify directory for storing results")
     
     parser.add_argument("--comments",
                         type=str,
-                        default="with_double_aa",
                         help="type of experiment")
     
     
@@ -70,14 +68,6 @@ def main(args):
 
     # Setup the policy network for training
     network = SequenceTransformer(config, config.training_device)
-
-    # set up mlflow connection 
-    set_mlflow_connection() 
-    model_start_time = f'{args.comments}'+ datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    if config.mlflow_experiment is None:
-        mlflow.set_experiment(f'{args.comments}' + '_' + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))                        
-    else:
-        mlflow.set_experiment(config.mlflow_experiment)
 
     # Initalize checkpoint dict
     if config.load_checkpoint_from_path is not None:
@@ -134,80 +124,73 @@ def main(args):
         print("------")
         print(f"Starting finetuning for {config.training_cycles} cycles.")
 
-        with mlflow.start_run(run_name = model_start_time):
-            for outer in range(config.training_cycles):
+        for outer in range(config.training_cycles):
 
 
-                # -------------------
-                # Training loop
-                # -------------------
-
-                print("------")
-                print(f"Round {outer + 1}.")
-                print(f"Generating Mutant Sequences.")
-                
-                # These generation weights now exactly match the live policy network that will be trained.
-                # model used for sampling BEFORE doing updates
-                sampling_model_weights = copy.deepcopy(network.get_weights())
-                sampling_optimizer_state = copy.deepcopy(dict_to_cpu(optimizer.state_dict()))
-
-                mlflow.log_params({k: v for k, v in vars(config).items() if isinstance(v, (int, float, str, bool))})
-
-                generated_loggable_dict, generated_trajectories = train_for_one_cycle(epoch=outer, config=config, network=network, 
-                                network_weights=sampling_model_weights, optimizer=optimizer, objective_evaluator=sequence_evaluator, 
-                                best_objective=best_validation_metric, 
-                                seen_protein_smiles=seen_protein_smiles, logger=logger)
-                
-                scheduler.step()
-                
-                # Train_for_one_cycle updated the live network.
-                current_model_weights = copy.deepcopy(network.get_weights())
-                current_optimizer_state = copy.deepcopy(dict_to_cpu(optimizer.state_dict()))
-
-                checkpoint["model_weights"] = current_model_weights
-                checkpoint["optimizer_state"] = current_optimizer_state
-
-                # measure by the best mean 20 objective found during sampling
-                val_metric = generated_loggable_dict["mean_top_20_obj"]   
-
-                checkpoint["validation_metric"] = val_metric
-                checkpoint["epochs_trained"] += 1
-
-                # log metrics per epoch 
-                for key, val in generated_loggable_dict.items():
-                    mlflow.log_metric(key, val, step=outer)
-
-                #metric is based on MIC, and we minimize it         
-                if val_metric <= best_validation_metric - min_delta:
-                    print(">> Got new best model.")
-                    best_model_weights = copy.deepcopy(sampling_model_weights)
-                    best_optimizer_state =  copy.deepcopy(sampling_optimizer_state)
-                    best_validation_metric = val_metric
-                    checkpoint["best_model_weights"] = copy.deepcopy(best_model_weights)
-                    checkpoint["best_optimizer_state"] = copy.deepcopy(best_optimizer_state)
-                    checkpoint["best_validation_metric"] = best_validation_metric
-                    num_bad_epochs = 0
-
-                    save_checkpoint(checkpoint, "best_model.pt", config)
-                
-                else:
-                    num_bad_epochs += 1
-                    print(f">> Validation mean MIC for top 20 {val_metric}. Best mean MIC for top 20 sequences so far: {best_validation_metric}")
-                    print(f"No improvement for {num_bad_epochs}/{patience} epochs.")
-
-                save_checkpoint(checkpoint, "last_model.pt", config)
-            
-                # early stopping trigger
-                if num_bad_epochs >= patience:
-                    print("Early stopping triggered.")
-                    break
-
+            # -------------------
+            # Training loop
+            # -------------------
 
             print("------")
-            print('Training ended for policy')
-            end_time = time.perf_counter()
-            elapsed = end_time - start_time
-            logger.log_metrics({"event":"total_training_time_sec", "time_elapsed": elapsed})
+            print(f"Round {outer + 1}.")
+            print(f"Generating Mutant Sequences.")
+            
+            # These generation weights now exactly match the live policy network that will be trained.
+            # model used for sampling BEFORE doing updates
+            sampling_model_weights = copy.deepcopy(network.get_weights())
+            sampling_optimizer_state = copy.deepcopy(dict_to_cpu(optimizer.state_dict()))
+
+            generated_loggable_dict, generated_trajectories = train_for_one_cycle(epoch=outer, config=config, network=network, 
+                            network_weights=sampling_model_weights, optimizer=optimizer, objective_evaluator=sequence_evaluator, 
+                            best_objective=best_validation_metric, 
+                            seen_protein_smiles=seen_protein_smiles, logger=logger)
+            
+            scheduler.step()
+            
+            # Train_for_one_cycle updated the live network.
+            current_model_weights = copy.deepcopy(network.get_weights())
+            current_optimizer_state = copy.deepcopy(dict_to_cpu(optimizer.state_dict()))
+
+            checkpoint["model_weights"] = current_model_weights
+            checkpoint["optimizer_state"] = current_optimizer_state
+
+            # measure by the best mean 20 objective found during sampling
+            val_metric = generated_loggable_dict["mean_top_20_obj"]   
+
+            checkpoint["validation_metric"] = val_metric
+            checkpoint["epochs_trained"] += 1
+
+            #metric is based on MIC, and we minimize it         
+            if val_metric <= best_validation_metric - min_delta:
+                print(">> Got new best model.")
+                best_model_weights = copy.deepcopy(sampling_model_weights)
+                best_optimizer_state =  copy.deepcopy(sampling_optimizer_state)
+                best_validation_metric = val_metric
+                checkpoint["best_model_weights"] = copy.deepcopy(best_model_weights)
+                checkpoint["best_optimizer_state"] = copy.deepcopy(best_optimizer_state)
+                checkpoint["best_validation_metric"] = best_validation_metric
+                num_bad_epochs = 0
+
+                save_checkpoint(checkpoint, "best_model.pt", config)
+            
+            else:
+                num_bad_epochs += 1
+                print(f">> Validation mean MIC for top 20 {val_metric}. Best mean MIC for top 20 sequences so far: {best_validation_metric}")
+                print(f"No improvement for {num_bad_epochs}/{patience} epochs.")
+
+            save_checkpoint(checkpoint, "last_model.pt", config)
+        
+            # early stopping trigger
+            if num_bad_epochs >= patience:
+                print("Early stopping triggered.")
+                break
+
+
+        print("------")
+        print('Training ended for policy')
+        end_time = time.perf_counter()
+        elapsed = end_time - start_time
+        logger.log_metrics({"event":"total_training_time_sec", "time_elapsed": elapsed})
 
     print("------")
     print('Inference with trained policy')
