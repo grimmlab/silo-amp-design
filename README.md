@@ -28,14 +28,21 @@ cd silo-amp-design
 
 SILO uses `uv` for Python dependency management. The Python dependencies are defined in `pyproject.toml` and are installed automatically when running the inference pipeline. However, MMseqs2 is required for sequence similarity evaluation and **must be installed separately**.
 
-### 1. Install MMseqs2
+### Create and activate a dedicated Conda environment:
+
+```bash
+conda create -n silo-amp python=3.10 -y
+
+conda activate silo-amp
+```
+
+### Install MMseqs2
 On Linux, MMseqs2 can be installed using Conda:
 
 ```bash
 conda install -c conda-forge -c bioconda mmseqs2
-
 ```
-### 2. Install Python dependencies
+### Install Python dependencies
 
 From the repository root:
 
