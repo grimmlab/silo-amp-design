@@ -495,7 +495,7 @@ If you use SILO for AMP, please cite the associated SILO paper:
 
 The implementation builds on or incorporates ideas, methods, and software from the following projects:
 - [SILO] (https://github.com/grimmlab/SILO): The original SILO framework for self-improvement imitation learning and protein sequence optimization.
-- [Gumbeldore](https://github.com/grimmlab/gumbeldore): Initial self improvement learning framework.
+- [Gumbeldore](https://github.com/grimmlab/gumbeldore): Initial self improvement learning framework. 
 - [Stochastic Beam Search](https://github.com/wouterkool/stochastic-beam-search): Stochastic beam-search methodology and reference implementation.
 - [APEX Pathogen] (https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
 - [OmegAMP](https://openreview.net/forum?id=hAq3XLZ9ex): AMP classification and likelihood scoring for generated peptide sequences.
