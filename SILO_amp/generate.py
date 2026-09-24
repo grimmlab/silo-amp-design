@@ -17,6 +17,14 @@ import pandas as pd
 import ray, torch, os, argparse, copy
 from pathlib import Path
 import logging
+import warnings
+from Bio import BiopythonDeprecationWarning
+warnings.filterwarnings(
+    "ignore",
+    category=BiopythonDeprecationWarning,
+    message=r"Bio\.pairwise2 has been deprecated.*",
+)
+
 project_root = Path(__file__).resolve().parent.parent
 
 
