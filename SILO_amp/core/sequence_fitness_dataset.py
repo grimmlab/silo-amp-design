@@ -70,21 +70,6 @@ class SequenceFitnessDataset:
             problem_instance = SequenceDesign.design_sequences(config=self.config, initial_seed=[vocabulary_residue_idcs[i]])
             problem_instances.append(problem_instance)
         
-        '''all_prefixes = list(product(vocabulary_residue_idcs,repeat=2,))
-
-        if not self.config.do_inference:
-            selected_prefixes = random.sample(all_prefixes,k=min(self.config.multiplier,len(all_prefixes),),)
-            for prefix in selected_prefixes:
-                problem_instance = SequenceDesign.design_sequences(config=self.config, initial_seed=list(prefix))
-                problem_instances.append(problem_instance)
-        else:
-            # Generate all possible two-amino-acid prefixes
-            initial_prefixes = list(product(vocabulary_residue_idcs,repeat=2,))
-            for prefix in initial_prefixes:
-                problem_instance = SequenceDesign.design_sequences(config=self.config, initial_seed=list(prefix))
-                problem_instances.append(problem_instance)'''
-        
-
 
         job_pool = JobPool.remote(copy.deepcopy(problem_instances))
         results = [None] * len(problem_instances)
@@ -193,7 +178,7 @@ def async_sbs_worker(config: Config, job_pool: JobPool, network_weights: dict,
     def batch_leaf_evaluation_fn(trajectories: List[SequenceDesign]) -> np.array:
 
         """
-           Multioptimization peptide criteria  
+           Scoring generated peptides using APEX pathogen 
 
         """
 
@@ -210,11 +195,7 @@ def async_sbs_worker(config: Config, job_pool: JobPool, network_weights: dict,
             seq.apex_dict["apex_gram_negative_mean"] = float(np.mean(GN_scores))
             seq.apex_dict["apex_gram_positive_mean"] = float(np.mean(GP_scores))
 
-            GN_mic90 = np.quantile(GN_scores,0.90,method="higher")
-            GP_mic90 = np.quantile(GP_scores,0.90,method="higher")
-            
             seq.objective = 0.5 * seq.apex_dict["apex_gram_negative_mean"] + seq.apex_dict["apex_gram_positive_mean"]
-            #seq.objective = 0.5 * GN_mic90 + 0.8 * GP_mic90
 
             # Calculate selectivity: 
             # Metric taken from https://www.nature.com/articles/s41551-024-01201-x 
