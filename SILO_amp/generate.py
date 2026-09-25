@@ -26,6 +26,7 @@ warnings.filterwarnings(
 )
 
 project_root = Path(__file__).resolve().parent.parent
+MAX_FILE_SIZE = 50 * 1024 * 1024
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -50,7 +51,7 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
         output_path = (project_root / output_path).resolve()
 
     output_dir = str(output_path)
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(str(output_dir), exist_ok=True)
 
     if not checkpoint_path:
         raise ValueError(f"checkpoint not found: {checkpoint_path}")
@@ -66,6 +67,7 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     config.training_device = args.device
     config.do_inference = True
     config.self_improvement_learning["devices_for_workers"] = [args.device]
+    config.self_improvement_learning["beam_width"] = 32
 
     network = SequenceTransformer(config, config.training_device)
     set_seed(args.seed)
@@ -77,18 +79,22 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     optimizer.load_state_dict(copy.deepcopy(checkpoint["optimizer_state"])) 
 
     output_rel = output_path.relative_to(project_root).as_posix()
+    excludes = [".git/**",f"{output_rel}/**","inference_model/**", "results/**",".venv/**",]
+    
+    # Exclude individual files larger than 50 MiB from being loaded into Ray workers
+    for path in project_root.rglob("*"):
+        if not path.is_file():
+            continue
+        relative_path = path.relative_to(project_root).as_posix()
+
+        if path.stat().st_size > MAX_FILE_SIZE:
+            excludes.append(relative_path)
+
     runtime_env={
         "working_dir": str(project_root),
-        "excludes": [
-            ".git/**",
-            f"{output_rel}/**",
-            ".venv/**",
-            "SILO_amp/.venv/**",
-            "SILO_amp/OmegAMP/data/generative-model-data/**",
-            "SILO_amp/OmegAMP/data/activity-data/**",
-        ],}
+        "excludes": excludes,}
     
-    logging.getLogger("ray._private.runtime_env.packaging").setLevel(logging.ERROR)
+    #logging.getLogger("ray._private.runtime_env.packaging").setLevel(logging.ERROR)
     ray.init(runtime_env=runtime_env)
     
     print(f"Policy network is on device {config.training_device}")
