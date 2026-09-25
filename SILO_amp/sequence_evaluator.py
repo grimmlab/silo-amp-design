@@ -105,7 +105,7 @@ class SelectionPolicy:
     hydrophobic_moment_cutoff: tuple[float, float]  = (0.3, 0.6)
     max_cysteines: int = 1
     max_hydrophobic_run: int = 3
-    diversity_similarity_limit: float = 0.40
+    diversity_similarity_limit: float = 0.60
 
 
 @dataclass
@@ -277,10 +277,9 @@ def select_candidates(
     #  3. Construct category-specific candidate pools
 
     # Broad-spectrum pool:
-    # Similar GP and GN MIC50 values and low overall MIC90.
+    # Similar GP and GN sensitivity score and low overall MIC90.
     broad_pool = sorted([x for x in top_valid if (min(x["apex_GP_mic50"], x["apex_GN_mic50"]) / max(x["apex_GP_mic50"], x["apex_GN_mic50"])) >= 0.9  
                    and x["apex_mic90"] <= activity_threshold], key=lambda x: (
-        # Most important: activity across many strains
         (x["apex_mic90"]), str(x["sequence"]),),)
     
     # Selection for GP pool
@@ -341,7 +340,7 @@ def select_candidates(
 
     # GP-selective fallback
     # If the initial GP pool is too small, extend it with
-    # additional candidates satisfying the apex_gram_positive_mean criterion.
+    # additional candidates satisfying the apex_GP_mic50 criterion.
 
     if len(gp_pool) < quotas["GP_selective"]:
         existing_gp_sequences = {str(x["sequence"]) for x in gp_pool}
@@ -350,10 +349,10 @@ def select_candidates(
                 x for x in top_valid
                 if str(x["sequence"]) not in existing_gp_sequences
                 and x["gram_positive_selectivity"] < 0.8
-                and x["apex_gram_positive_mean"] <= activity_threshold
+                and x["apex_GP_mic50"] <= activity_threshold
             ],
             key=lambda x: (
-                x["apex_gram_positive_mean"],              # fallback: lower apex_gram_positive_mean is better
+                x["apex_GP_mic50"],              # fallback: lower apex_GP_mic50 is better
                 x["gram_positive_selectivity"],
                 str(x["sequence"]),
             ),
@@ -372,10 +371,10 @@ def select_candidates(
             [
                 x for x in top_valid
                 if str(x["sequence"]) not in existing_mdr_sequences
-                and x["apex_mdr_mean"] <= activity_threshold
+                and x["apex_mdr_mic50"] <= activity_threshold
             ],
             key=lambda x: (
-                x["apex_mdr_mean"],              # fallback: lower MIC50 is better
+                x["apex_mdr_mic50"],              # fallback: lower MIC50 is better
                 str(x["sequence"]),
             ),
         )
@@ -384,17 +383,17 @@ def select_candidates(
 
     # Broad-spectrum fallback
     # Preserve the original broad_pool.
-    # If it is too small, extend it with mean-mic-eligible broad-spectrum candidates.
+    # If it is too small, extend it with apex_mic50 broad-spectrum candidates.
 
     if len(broad_pool) < quotas["broad_spectrum"]:
         existing_broad_sequences = {str(x["sequence"]) for x in broad_pool}
 
         bs_fallback = sorted([x for x in top_valid if (str(x["sequence"]) not in existing_broad_sequences) and 
                               (min(x["apex_GP_mic50"], x["apex_GN_mic50"]) / max(x["apex_GP_mic50"], x["apex_GN_mic50"])) >= 0.9  
-                   and x["apex_mean_mic"] <= activity_threshold],   
+                   and x["apex_mic50"] <= activity_threshold],   
                    key=lambda x: (
         # Most important: activity across many strains
-        (x["apex_mean_mic"]), str(x["sequence"]),),)
+        (x["apex_mic50"]), str(x["sequence"]),),)
 
         broad_pool.extend(bs_fallback)
 
