@@ -39,7 +39,6 @@ class SequenceConfig:
         self.do_inference = False
 
         self.num_predictor_workers = 1 
-        self.apex_work_dir = './SILO_amp/apex'
         self.training_cycles = args.epoches # number of active learning rounds 
         self.min_max_seq_length= [8, 50] # change this after pretraining
         self.multiplier = 20
