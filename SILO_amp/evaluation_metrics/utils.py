@@ -9,10 +9,11 @@ from ..apex.utils import onehot_encoding, make_vocab
 sys.modules["APEX_models"] = APEX_models
 from ..evaluation_metrics.metrics_utils import mmseqs_marlys_similarity, calculate_physchem_prop, calculate_hydrophobicmoment, calculate_charge, calculate_hydrophobicity
 from Bio import SeqIO
+SILO_DIR = Path(__file__).resolve().parent
 
-OMEGAMP_ROOT = Path(__file__).resolve().parents[1] / "OmegAMP"
+'''OMEGAMP_ROOT = Path(__file__).resolve().parents[1] / "OmegAMP"
 if str(OMEGAMP_ROOT) not in sys.path:
-    sys.path.insert(0, str(OMEGAMP_ROOT))
+    sys.path.insert(0, str(OMEGAMP_ROOT))'''
 
 from project.classifiers import AMPClassifier
 
@@ -61,7 +62,7 @@ class OmegAMPScorer:
 class APEXEnsemble:
     def __init__(self, config, device):
         # Load the 8 pretrained APEX-pathogen models (relative to this file, not the cwd).
-        MODEL_DIR = os.path.join(config.apex_work_dir, "APEX_pathogen_models")
+        MODEL_DIR = os.path.join(SILO_DIR, "apex", "APEX_pathogen_models")
         self.APEX_models = []
         self.device = device
         self.max_len = 52 #maximum seq length; 52 = start character + maximum peptide length (50 aa) + end character; longer peptides will be truncated
