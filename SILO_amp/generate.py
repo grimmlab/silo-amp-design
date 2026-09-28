@@ -45,6 +45,10 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     SILO_DIR = Path(__file__).resolve().parent 
     INFERENCE_MODEL_DIR =repo_root / "inference_model"
     checkpoint_path = INFERENCE_MODEL_DIR
+    print(f"Root dir: {repo_root}")
+    print(f"Inference model dir: {INFERENCE_MODEL_DIR}")
+    print(f"SILO dir: {SILO_DIR}")
+
 
     output_dir = args.output_dir
     output_path = Path(args.output_dir)
@@ -80,19 +84,19 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     optimizer.load_state_dict(copy.deepcopy(checkpoint["optimizer_state"])) 
 
     output_rel = output_path.relative_to(repo_root).as_posix()
-    excludes = [".git/**",f"{output_rel}/**","inference_model/**","generate/**", ".venv/**", "submission/generate/**",]
+    excludes = [".git/**",f"{output_rel}/**",f"{INFERENCE_MODEL_DIR}/**","generate/**", ".venv/**", f"{repo_root}/submission/generate/**",]
     
     # Exclude individual files larger than 50 MiB from being loaded into Ray workers
-    for path in repo_root.rglob("*"):
+    for path in SILO_DIR.rglob("*"):
         if not path.is_file():
             continue
-        relative_path = path.relative_to(repo_root).as_posix()
+        relative_path = path.relative_to(SILO_DIR).as_posix()
 
         if path.stat().st_size > MAX_FILE_SIZE:
             excludes.append(relative_path)
 
     runtime_env={
-        "working_dir": str(repo_root),
+        "working_dir": str(SILO_DIR),
         "excludes": excludes,}
     
     ray.init(runtime_env=runtime_env)
