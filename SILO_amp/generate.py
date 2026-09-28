@@ -48,7 +48,7 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     print(f"Root dir: {repo_root}")
     print(f"Inference model dir: {INFERENCE_MODEL_DIR}")
     print(f"SILO dir: {SILO_DIR}")
-    output_path = SILO_DIR.parent / output_path
+    output_path = SILO_DIR.parent / "generate"
     print(f"output_path dir: {output_path}")
 
     output_dir = str(output_path)
