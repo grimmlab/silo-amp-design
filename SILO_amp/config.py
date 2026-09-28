@@ -1,3 +1,5 @@
+from pathlib import Path
+SILO_DIR = Path(__file__).resolve().parent 
 
 class SequenceConfig:
     def __init__(self, args):
@@ -48,9 +50,9 @@ class SequenceConfig:
         self.num_epochs = 1
         self.CUDA_VISIBLE_DEVICES = "0,1"  # Must be set, as ray can have problems detecting multiple GPUs
         self.batch_size_training = 8
-        self.training_fasta = './SILO_amp/data/training.fasta'
-        self.marlys_fasta = './SILO_amp/data/marlys.fasta'
-        self.antibacterial_fasta = './SILO_amp/data/antibacterial.fasta'
+        self.training_fasta = SILO_DIR / "data/training.fasta" 
+        self.marlys_fasta = SILO_DIR/ "data/marlys.fasta"
+        self.antibacterial_fasta = SILO_DIR/ "data/antibacterial.fasta"
         
         self.load_checkpoint_from_path = None
         self.if_pretrain = False
