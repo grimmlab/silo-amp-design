@@ -11,9 +11,9 @@ from ..evaluation_metrics.metrics_utils import mmseqs_marlys_similarity, calcula
 from Bio import SeqIO
 SILO_DIR = Path(__file__).resolve().parent
 
-'''OMEGAMP_ROOT = Path(__file__).resolve().parents[1] / "OmegAMP"
+OMEGAMP_ROOT = Path(__file__).resolve().parents[1] / "OmegAMP"
 if str(OMEGAMP_ROOT) not in sys.path:
-    sys.path.insert(0, str(OMEGAMP_ROOT))'''
+    sys.path.insert(0, str(OMEGAMP_ROOT))
 
 from project.classifiers import AMPClassifier
 
