@@ -16,8 +16,8 @@ from .model.transformer_architecture import SequenceTransformer
 import pandas as pd
 import ray, torch, os, argparse, copy
 from pathlib import Path
-import logging
 import warnings
+from SILO_amp.paths import INFERENCE_MODEL_DIR, PROJECT_ROOT
 from Bio import BiopythonDeprecationWarning
 warnings.filterwarnings(
     "ignore",
@@ -25,7 +25,6 @@ warnings.filterwarnings(
     message=r"Bio\.pairwise2 has been deprecated.*",
 )
 
-project_root = Path(__file__).resolve().parent.parent
 MAX_FILE_SIZE = 50 * 1024 * 1024
 
 
@@ -44,11 +43,11 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
 
     """Generate, select, and write candiates using the SILO."""
 
-    checkpoint_path = project_root.parent / "inference_model"
+    checkpoint_path = INFERENCE_MODEL_DIR
     output_dir = args.output_dir
     output_path = Path(args.output_dir)
     if not output_path.is_absolute():
-        output_path = (project_root / output_path).resolve()
+        output_path = PROJECT_ROOT / output_path
 
     output_dir = str(output_path)
     os.makedirs(str(output_dir), exist_ok=True)
@@ -78,23 +77,22 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     optimizer = torch.optim.Adam(network.parameters(), lr=config.optimizer["lr"], weight_decay=config.optimizer["weight_decay"])
     optimizer.load_state_dict(copy.deepcopy(checkpoint["optimizer_state"])) 
 
-    output_rel = output_path.relative_to(project_root).as_posix()
-    excludes = [".git/**",f"{output_rel}/**","inference_model/**", "results/**",".venv/**",]
+    output_rel = output_path.relative_to(PROJECT_ROOT).as_posix()
+    excludes = [".git/**",f"{output_rel}/**","inference_model/**", "results/**",".venv/**", "submission/**",]
     
     # Exclude individual files larger than 50 MiB from being loaded into Ray workers
-    for path in project_root.rglob("*"):
+    for path in PROJECT_ROOT.rglob("*"):
         if not path.is_file():
             continue
-        relative_path = path.relative_to(project_root).as_posix()
+        relative_path = path.relative_to(PROJECT_ROOT).as_posix()
 
         if path.stat().st_size > MAX_FILE_SIZE:
             excludes.append(relative_path)
 
     runtime_env={
-        "working_dir": str(project_root),
+        "working_dir": str(PROJECT_ROOT),
         "excludes": excludes,}
     
-    #logging.getLogger("ray._private.runtime_env.packaging").setLevel(logging.ERROR)
     ray.init(runtime_env=runtime_env)
     
     print(f"Policy network is on device {config.training_device}")
