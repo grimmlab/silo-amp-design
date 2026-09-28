@@ -48,12 +48,8 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     print(f"Root dir: {repo_root}")
     print(f"Inference model dir: {INFERENCE_MODEL_DIR}")
     print(f"SILO dir: {SILO_DIR}")
-
-
-    output_dir = args.output_dir
-    output_path = Path(args.output_dir)
-    if not output_path.is_absolute():
-        output_path = repo_root / output_path
+    output_path = SILO_DIR.parent / output_path
+    print(f"output_path dir: {output_path}")
 
     output_dir = str(output_path)
     os.makedirs(str(output_dir), exist_ok=True)
