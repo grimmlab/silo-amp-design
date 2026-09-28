@@ -17,7 +17,6 @@ import pandas as pd
 import ray, torch, os, argparse, copy
 from pathlib import Path
 import warnings
-from SILO_amp.paths import INFERENCE_MODEL_DIR, PROJECT_ROOT
 from Bio import BiopythonDeprecationWarning
 warnings.filterwarnings(
     "ignore",
@@ -30,7 +29,6 @@ MAX_FILE_SIZE = 50 * 1024 * 1024
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="SILO for AMP design reproducible inference")
-    parser.add_argument("--checkpoint", type=Path, default='./inference_model')
     parser.add_argument("--output_dir", type=Path, default='./generate')
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="cuda:0")
@@ -43,11 +41,15 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
 
     """Generate, select, and write candiates using the SILO."""
 
+    repo_root = find_project_root()
+    SILO_DIR = Path(__file__).resolve().parent 
+    INFERENCE_MODEL_DIR =repo_root / "inference_model"
     checkpoint_path = INFERENCE_MODEL_DIR
+
     output_dir = args.output_dir
     output_path = Path(args.output_dir)
     if not output_path.is_absolute():
-        output_path = PROJECT_ROOT / output_path
+        output_path = repo_root / output_path
 
     output_dir = str(output_path)
     os.makedirs(str(output_dir), exist_ok=True)
@@ -77,20 +79,20 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
     optimizer = torch.optim.Adam(network.parameters(), lr=config.optimizer["lr"], weight_decay=config.optimizer["weight_decay"])
     optimizer.load_state_dict(copy.deepcopy(checkpoint["optimizer_state"])) 
 
-    output_rel = output_path.relative_to(PROJECT_ROOT).as_posix()
-    excludes = [".git/**",f"{output_rel}/**","inference_model/**", "results/**",".venv/**", "submission/**",]
+    output_rel = output_path.relative_to(repo_root).as_posix()
+    excludes = [".git/**",f"{output_rel}/**","inference_model/**","generate/**", ".venv/**", "submission/generate/**",]
     
     # Exclude individual files larger than 50 MiB from being loaded into Ray workers
-    for path in PROJECT_ROOT.rglob("*"):
+    for path in repo_root.rglob("*"):
         if not path.is_file():
             continue
-        relative_path = path.relative_to(PROJECT_ROOT).as_posix()
+        relative_path = path.relative_to(repo_root).as_posix()
 
         if path.stat().st_size > MAX_FILE_SIZE:
             excludes.append(relative_path)
 
     runtime_env={
-        "working_dir": str(PROJECT_ROOT),
+        "working_dir": str(repo_root),
         "excludes": excludes,}
     
     ray.init(runtime_env=runtime_env)
@@ -130,6 +132,20 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
         expected_top_k=args.top_k,
         config=config
     )
+
+def find_project_root() -> Path:
+    """Find repository root containing inference_model/."""
+    current = Path(__file__).resolve().parent
+
+    for parent in [current, *current.parents]:
+        if (parent / "inference_model" / "best_model.pt").is_file():
+            return parent
+
+    raise FileNotFoundError(
+        "Could not find inference_model/best_model.pt "
+        "in any parent directory."
+    )
+
 
 
 def main(argv: list[str] | None = None) -> int:
