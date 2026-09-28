@@ -10,7 +10,7 @@ from Bio import Align
 from .evaluation_metrics.metrics_utils import local_similarity, novelty_against_reference
 STANDARD_ALPHABET = frozenset("ACDEFGHIKLMNPQRSTVWY")
 from pathlib import Path
-PACKAGE_DIR = Path(__file__).resolve().parent
+SILO_DIR = Path(__file__).resolve().parent
 
 @ray.remote
 class PredictorWorker:
@@ -28,7 +28,7 @@ class SequenceEvaluator:
         self.device = torch.device("cpu") if device is None else device
         self.predictor_workers = [PredictorWorker.remote(self.config, self.device) for _ in range(self.config.num_predictor_workers)] 
         self.apex_ensemble = APEXEnsemble(self.config, self.device)
-        self.OmegAMPScorer = OmegAMPScorer('./SILO_amp/OmegAMP')
+        self.OmegAMPScorer = OmegAMPScorer(SILO_DIR / "OmegAMP")
         self.peptide_checks = PeptideChecks(self.config)
 
     def calculate_apex_scores(self, sequences:List[Union[SequenceDesign, str]]):
