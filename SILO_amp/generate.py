@@ -17,6 +17,7 @@ import pandas as pd
 import ray, torch, os, argparse, copy
 from pathlib import Path
 import warnings
+import logging
 from Bio import BiopythonDeprecationWarning
 warnings.filterwarnings(
     "ignore",
@@ -95,7 +96,7 @@ def run_inference(args: argparse.Namespace) -> dict[str, Any]:
         "working_dir": str(SILO_DIR),
         "excludes": excludes,}
     
-    ray.init(runtime_env=runtime_env)
+    ray.init(runtime_env=runtime_env, log_to_driver=False, logging_level=logging.ERROR)
     
     print(f"Policy network is on device {config.training_device}")
     network.to(network.device)
