@@ -4,7 +4,6 @@ import argparse
 import os
 import sys
 import shutil
-
 import Levenshtein
 
 STANDARD_AMINO_ACIDS = set("ACDEFGHIKLMNPQRSTVWY")
@@ -12,7 +11,6 @@ MIN_LENGTH = 8
 MAX_LENGTH = 50
 
 ENTRY_POINT = "generate"
-
 TOP_SIZE = 100
 LIBRARY_SIZE = 50_000
 
