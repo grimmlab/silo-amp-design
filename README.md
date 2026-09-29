@@ -1,7 +1,10 @@
 
 # SILO-AMP: Self-Improvement Imitation Learning for Antimicrobial Peptide Design
 
-This repository contains the official implementation and submission of **SILO-AMP** for the [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027). SILO (Self-Improvement Imitation Learning for Protein Optimization) is a generative protein sequence optimization approach adapted for de-novo antimicrobial peptide (AMP) design. Our approach combines a transformer-based generative policy, incremental stochastic beam search, surrogate-guided activity evaluation, and self-imitation learning to explore the antimicrobial peptide sequence space.
+This repository contains the official implementation and submission of **SILO-AMP** for the [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027). 
+
+SILO (Self-Improvement Imitation Learning for Protein Optimization) is a generative protein sequence optimization approach adapted for de-novo antimicrobial peptide (AMP) design. Our approach combines a transformer-based generative policy, incremental stochastic beam search, surrogate-guided activity evaluation, and self-imitation learning to explore the antimicrobial peptide sequence space.
+
 For the AMP Challenge, SILO-AMP generates a library of 50,000 unique peptide candidates, evaluates their predicted antimicrobial activity against 11 bacterial pathogens using APEX-Pathogen model (https://gitlab.com/machine-biology-group-public/apex-pathogen), and applies physicochemical, synthesizability, novelty, and diversity filters to select a final set of 100 candidates.
 
 The repository provides the code required to train the SILO-AMP policy, perform inference using a pretrained checkpoint, generate the candidate library, and verify the final submission.
