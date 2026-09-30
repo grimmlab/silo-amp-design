@@ -500,7 +500,7 @@ The implementation builds on or incorporates ideas, methods, and software from t
 - [SILO](https://github.com/grimmlab/SILO): The original SILO approach for self-improvement imitation learning and protein sequence optimization under active learning setting.
 - [Gumbeldore](https://github.com/grimmlab/gumbeldore): The official implemention of self-improvement learning for routing and benchmark optimisation problems. 
 - [Stochastic Beam Search](https://github.com/wouterkool/stochastic-beam-search): Stochastic beam-search methodology and reference implementation.
-- [APEX Pathogen](https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
+- [APEX Pathogen](https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SIL-AMP optimization.
 - [OmegAMP](https://github.com/szczurek-lab/OmegAMP.git): AMP classification and likelihood scoring for generated peptide sequences.
 - [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027): Competition resources and submission specifications.
 
