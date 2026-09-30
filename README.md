@@ -34,7 +34,7 @@ cd silo-amp-design
 
 ### 1.2. Environment and Installation
 
-SILO uses `uv` for Python dependency management. The Python dependencies are defined in `pyproject.toml` and are installed automatically when running the inference pipeline. However, MMseqs2 is required for sequence similarity evaluation and **must be installed separately**.
+SIL-AMP uses `uv` for Python dependency management. The Python dependencies are defined in `pyproject.toml` and are installed automatically when running the inference pipeline. However, MMseqs2 is required for sequence similarity evaluation and **must be installed separately**.
 
 ### Create and activate a dedicated Conda environment:
 
@@ -51,7 +51,7 @@ conda install -c conda-forge -c bioconda mmseqs2
 ```
 ### Install Python dependencies
 
-From the repository root:
+From the root folder `silo-amp-design/`:
 
 ```bash
 uv sync
@@ -81,7 +81,7 @@ or
  uv run generate
 
 ```
-These commands loads the pretrained SILO policy, generates the peptide library, evaluates candidate sequences, and selects the final submission. The inference pipeline produces:
+These commands loads the pretrained SIL-AMP policy, generates the peptide library, evaluates candidate sequences, and selects the final submission. The inference pipeline produces:
 
 - A library of 50,000 unique peptide sequences.
 - Predicted antimicrobial activity and physicochemical properties for the generated candidates.
@@ -173,7 +173,7 @@ The `SILO_amp` directory contains the implementation of the generative policy, s
 | `training/` | SIL-AMP training utilities and associated training datasets. |
 | `data/` | Reference FASTA files used for candidate filtering and sequence novelty checks. |
 
-*** Module execution ***
+### 2.3. Module execution 
 
 The SIL-AMP implementation is organized as a Python module. All main entry points should therefore be executed from the repository root using Python's module syntax.
 
@@ -232,9 +232,9 @@ This installs the project in editable mode using the configuration defined in `p
 
 ## 4. Method Overview
 
-SIL-AMP is an iterative optimization framework that improves a generative protein design policy by learning from its own high-performing solutions.
+SIL-AMP is an iterative optimization approach that improves a generative protein design policy by learning from its own high-performing solutions.
 
-The framework consists of four main components.
+The approach consists of four main components.
 
 ### 4.1. Generative policy
 
@@ -248,7 +248,7 @@ SIL-AMP employs incremental stochastic beam search to generate diverse candidate
 
 Generated candidates are evaluated using APEX, a machine learning-based antimicrobial activity predictor. APEX predicts minimum inhibitory concentrations (MICs) against 11 bacterial pathogens. These predictions are used to identify promising candidates and guide the optimization process toward peptide sequences with favorable predicted antimicrobial activity. Additional physicochemical, sequence validity, and diversity criteria are used to constrain the generated sequences.
 
-### 4.4. Self-improvement imitation learning
+### 4.4. Self-imitation learning
 
 Rather than learning an explicit value function or applying policy-gradient optimization, SIL-AMP improves its policy by learning from its own best-performing generation trajectories. High-performing trajectories are selected based on oracle evaluations and used to fine-tune the transformer policy through next-action cross-entropy learning. **Importantly, SIL-AMP learns in the action space rather than directly optimizing sequences as independent objects.** The policy learns to increase the likelihood of the actions that generated promising candidates, allowing the knowledge gained from previous search iterations to guide subsequent generation.
 
@@ -323,7 +323,6 @@ Candidate sequences are additionally evaluated using OmegAMP. OmegAMP provides m
 
 ```text
 SILO_amp/OmegAMP/
-
 ```
 
 ### 6.3. Initial sequence filtering
@@ -381,8 +380,8 @@ The filtering criteria include:
 | Net charge | Between +2.0 and +10.0. |
 | Hydrophobicity | Between -0.5 and 0.8. |
 | Hydrophobic moment | Between 0.3 and 0.6. |
-| Cysteine content | Must satisfy the configured maximum cysteine count. |
-| Hydrophobic runs | Must not exceed the configured maximum consecutive hydrophobic stretch. |
+| Cysteine content | No more than one cysteine residue per sequence. |
+| Hydrophobic runs | No consecutive hydrophobic stretch exceeding 3. |
 | Proline content | No more than 20% of the total sequence length. |
 | Consecutive glycines | No more than two consecutive glycine residues. |
 | MarLys sequence identity | No local alignment with greater than 80% identity covering at least 80% of the candidate sequence. |
@@ -498,7 +497,7 @@ If you use SIL-AMP, please cite the associated SILO paper:
 [https://arxiv.org/abs/2605.26690](https://arxiv.org/abs/2605.26690)
 
 The implementation builds on or incorporates ideas, methods, and software from the following projects:
-- [SILO](https://github.com/grimmlab/SILO): The original SILO framework for self-improvement imitation learning and protein sequence optimization.
+- [SILO](https://github.com/grimmlab/SILO): The original SILO approach for self-improvement imitation learning and protein sequence optimization under active learning setting.
 - [Gumbeldore](https://github.com/grimmlab/gumbeldore): The official implemention of self-improvement learning for routing and benchmark optimisation problems. 
 - [Stochastic Beam Search](https://github.com/wouterkool/stochastic-beam-search): Stochastic beam-search methodology and reference implementation.
 - [APEX Pathogen](https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
