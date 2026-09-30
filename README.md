@@ -2,7 +2,7 @@
 # SIL-AMP: Self-Imitation Learning for Antimicrobial Peptide Design
 
 <p align="center">
-  <img src="figures/SIL-AMP.png" width="900">
+  <img src="figure/SIL-AMP.png" width="900">
 </p>
 
 <p align="center">
