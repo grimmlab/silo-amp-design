@@ -1,13 +1,19 @@
 
-# SILO-AMP: Self-Improvement Imitation Learning for Antimicrobial Peptide Design
+# SIL-AMP: Self-Imitation Learning for Antimicrobial Peptide Design
 
-This repository contains the official implementation and submission of **SILO-AMP** for the [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027). 
+<p align="center">
+  <img src="figures/SIL-AMP.png" width="900">
+</p>
 
-SILO (Self-Improvement Imitation Learning for Protein Optimization) is a generative protein sequence optimization approach adapted for de-novo antimicrobial peptide (AMP) design. Our approach combines a transformer-based generative policy, incremental stochastic beam search, surrogate-guided activity evaluation, and self-imitation learning to explore the antimicrobial peptide sequence space.
+<p align="center">
+  <em>Figure 1. Overview of the SIL-AMP optimization workflow. Each round of optimization, SIL-AMP iteratively generates, evaluates, selects, and learns from high-performing antimicrobial peptide candidates.</em>
+</p>
 
-For the AMP Challenge, SILO-AMP generates a library of 50,000 unique peptide candidates, evaluates their predicted antimicrobial activity against 11 bacterial pathogens using APEX-Pathogen model (https://gitlab.com/machine-biology-group-public/apex-pathogen), and applies physicochemical, synthesizability, novelty, and diversity filters to select a final set of 100 candidates.
+This repository contains the official implementation and submission of **SIL-AMP** for the [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027). SIL-AMP is based on SILO (Self-Improvement Imitation Learning for Protein Optimization) with modifications for antimicrobial peptide (AMP) design. Our approach combines a transformer-based generative policy, incremental stochastic beam search, surrogate-guided activity evaluation, and self-imitation learning to explore the antimicrobial peptide sequence space.
 
-The repository provides the code required to train the SILO-AMP policy, perform inference using a pretrained checkpoint, generate the candidate library, and verify the final submission.
+For the AMP Challenge, SIL-AMP generates a library of 50,000 unique peptide candidates, evaluates their predicted antimicrobial activity against 11 bacterial pathogens using [APEX-Pathogen model](https://gitlab.com/machine-biology-group-public/apex-pathogen), and applies physicochemical, synthesizability, novelty, and diversity filters to select a final set of 100 candidates.
+
+The repository provides the code required to train the SIL-AMP policy, perform inference using a pretrained checkpoint, generate the candidate library, and verify the final submission.
 
 The underlying method is described in our **NeurIPS 2026** paper:
 
@@ -140,8 +146,8 @@ silo-amp-design/
 |---|---|
 | `data/` | Antibacterial.fasta, training.fasta and MarLys.fasta files for novelty and diversity checks |
 | `generate/` | Output directory for generated peptide libraries and final submission artifacts. |
-| `inference_model/` | Directory containing the finetuned SILO-AMP policy checkpoint used for inference. |
-| `SILO_amp/` | Main Python module containing the SILO-AMP implementation for antimicrobial peptide design. |
+| `inference_model/` | Directory containing the finetuned SIL-AMP policy checkpoint used for inference. |
+| `SILO_amp/` | Main Python module containing the SIL-AMP implementation for antimicrobial peptide design. |
 | `pyproject.toml` | Python project configuration and package dependency information. |
 | `README.md` | Documentation for installation, inference, training, and submission verification. |
 | `verify_submission.py` | Entry point for verifying the competition submission. |
@@ -153,7 +159,7 @@ The `SILO_amp` directory contains the implementation of the generative policy, s
 | Module or directory | Description |
 |---|---|
 | `generate.py` | Inference entry point for generating and selecting competition candidates. |
-| `main.py` | Main training or fine-tuning entry point for SILO-AMP. |
+| `main.py` | Main training or fine-tuning entry point for SIL-AMP. |
 | `config.py` | Configuration of model architecture, generation parameters, data paths, evaluation, and optimization. |
 | `model/` | Transformer-based generative policy and associated model components. |
 | `core/` | Sequence generation and incremental stochastic beam-search implementation. |
@@ -164,12 +170,12 @@ The `SILO_amp` directory contains the implementation of the generative policy, s
 | `apex/` | APEX pathogen MIC prediction models and associated evaluation utilities. |
 | `OmegAMP/` | OmegAMP implementation and model assets for AMP likelihood prediction. |
 | `pretrain/` | Data preparation and supervised pretraining utilities. |
-| `training/` | SILO-AMP training utilities and associated training datasets. |
+| `training/` | SIL-AMP training utilities and associated training datasets. |
 | `data/` | Reference FASTA files used for candidate filtering and sequence novelty checks. |
 
-*** Module execution**
+*** Module execution ***
 
-The SILO-AMP implementation is organized as a Python module. All main entry points should therefore be executed from the repository root using Python's module syntax.
+The SIL-AMP implementation is organized as a Python module. All main entry points should therefore be executed from the repository root using Python's module syntax.
 
 For example:
 
@@ -184,7 +190,7 @@ rather than executing the source file directly.
 
 ### 3.1. System requirements
 
-The inference pipeline requires a Python environment with PyTorch and the scientific computing packages used by SILO-AMP, APEX, and OmegAMP.
+The inference pipeline requires a Python environment with PyTorch and the scientific computing packages used by SIL-AMP, APEX, and OmegAMP.
 
 The original development configuration used:
 
@@ -212,7 +218,7 @@ Upgrade pip:
 python -m pip install --upgrade pip
 ```
 
-### 3.3. Install the SILO-AMP package
+### 3.3. Install the SIL-AMP package
 
 From the repository root, install the project and its dependencies:
 
@@ -226,17 +232,17 @@ This installs the project in editable mode using the configuration defined in `p
 
 ## 4. Method Overview
 
-SILO-AMP is an iterative optimization framework that improves a generative protein design policy by learning from its own high-performing solutions.
+SIL-AMP is an iterative optimization framework that improves a generative protein design policy by learning from its own high-performing solutions.
 
 The framework consists of four main components.
 
 ### 4.1. Generative policy
 
-SILO-AMP uses a transformer-based autoregressive decoder as its generative policy. The policy is first pretrained on a curated collection of known antimicrobial peptide sequences found under `silo-amp-design/SILO_amp/data/training.fasta`. During sequence optimization, the policy generates new peptide candidates through a sequence of actions in the peptide design space.
+SIL-AMP uses a transformer-based autoregressive decoder as its generative policy. The policy is first pretrained on a curated collection of known antimicrobial peptide sequences found under `silo-amp-design/SILO_amp/data/training.fasta`. During sequence optimization, the policy generates new peptide candidates through a sequence of actions in the peptide design space.
 
 ### 4.2. Incremental stochastic beam search
 
-SILO-AMP employs incremental stochastic beam search to generate diverse candidate sequences. Unlike deterministic beam search, stochastic beam search introduces randomness into candidate generation, allowing the policy to explore multiple promising regions of the peptide sequence space. The search procedure produces candidate generation trajectories that can subsequently be evaluated and used for policy improvement.
+SIL-AMP employs incremental stochastic beam search to generate diverse candidate sequences. Unlike deterministic beam search, stochastic beam search introduces randomness into candidate generation, allowing the policy to explore multiple promising regions of the peptide sequence space. The search procedure produces candidate generation trajectories that can subsequently be evaluated and used for policy improvement.
 
 ### 4.3. Activity-guided evaluation
 
@@ -244,7 +250,7 @@ Generated candidates are evaluated using APEX, a machine learning-based antimicr
 
 ### 4.4. Self-improvement imitation learning
 
-Rather than learning an explicit value function or applying policy-gradient optimization, SILO-AMP improves its policy by learning from its own best-performing generation trajectories. High-performing trajectories are selected based on oracle evaluations and used to fine-tune the transformer policy through next-action cross-entropy learning. **Importantly, SILO-AMP learns in the action space rather than directly optimizing sequences as independent objects.** The policy learns to increase the likelihood of the actions that generated promising candidates, allowing the knowledge gained from previous search iterations to guide subsequent generation.
+Rather than learning an explicit value function or applying policy-gradient optimization, SIL-AMP improves its policy by learning from its own best-performing generation trajectories. High-performing trajectories are selected based on oracle evaluations and used to fine-tune the transformer policy through next-action cross-entropy learning. **Importantly, SIL-AMP learns in the action space rather than directly optimizing sequences as independent objects.** The policy learns to increase the likelihood of the actions that generated promising candidates, allowing the knowledge gained from previous search iterations to guide subsequent generation.
 
 The overall optimization process alternates between:
 
@@ -259,7 +265,7 @@ The updated policy is then used to generate candidates in the next optimization 
 
 ## 5. Training Data and Pretraining
 
-Before iterative optimization, the SILO-AMP generative policy is pretrained on a curated collection of known antimicrobial peptide sequences.
+Before iterative optimization, the SIL-AMP generative policy is pretrained on a curated collection of known antimicrobial peptide sequences.
 
 ### 5.1. Pretraining datasets
 
@@ -276,7 +282,7 @@ Dataset references:
 - [AMPDiffusion training data](https://github.com/szczurek-lab/ampdiffusion-starter-kit/tree/main/data/training.fasta)
 - [HydrAMP repository and GRAMPA data](https://github.com/szczurek-lab/hydramp-starter-kit/tree/main/data)
 
-After merging, deduplication, and length filtering, the resulting pretraining dataset contained **21,881 unique antimicrobial peptide sequences.** The curated dataset was used to pretrain the transformer-based generative policy before SILO-AMP optimization.
+After merging, deduplication, and length filtering, the resulting pretraining dataset contained **21,881 unique antimicrobial peptide sequences.** The curated dataset was used to pretrain the transformer-based generative policy before SIL-AMP optimization.
 
 ### 5.2. Pretraining implementation
 
@@ -292,7 +298,7 @@ The main pretraining implementation is:
 SILO_amp/pretrain/pretrain.py
 ```
 
-Pretraining initializes the generative policy on known AMP sequences before subsequent activity-guided optimization. Pretraining is not required for competition inference when the supplied SILO-AMP checkpoint is used.
+Pretraining initializes the generative policy on known AMP sequences before subsequent activity-guided optimization. Pretraining is not required for competition inference when the supplied SIL-AMP checkpoint is used.
 
 ---
 
@@ -465,7 +471,7 @@ Diagnostic information may be written to `diagnostic_error.json` to support trou
 
 ## 9. Training and Fine-Tuning
 
-The full SILO-AMP finetuning implementation is provided for reproducibility and further research.
+The full SIL-AMP finetuning implementation is provided for reproducibility and further research.
 
 The main training entry point is:
 
@@ -487,15 +493,15 @@ python -m SILO_amp.main \
 
 ## 10. Citation and Acknowledgements
 
-If you use SILO-AMP, please cite the associated SILO paper:
+If you use SIL-AMP, please cite the associated SILO paper:
 **Self-Improvement Imitation with Biologically Guided Search for Protein Design Under Oracle Budgets**
 [https://arxiv.org/abs/2605.26690](https://arxiv.org/abs/2605.26690)
 
 The implementation builds on or incorporates ideas, methods, and software from the following projects:
-- [SILO] (https://github.com/grimmlab/SILO): The original SILO framework for self-improvement imitation learning and protein sequence optimization.
-- [Gumbeldore](https://github.com/grimmlab/gumbeldore): Initial self improvement learning framework. 
+- [SILO](https://github.com/grimmlab/SILO): The original SILO framework for self-improvement imitation learning and protein sequence optimization.
+- [Gumbeldore](https://github.com/grimmlab/gumbeldore): The official implemention of self-improvement learning for routing and benchmark optimisation problems. 
 - [Stochastic Beam Search](https://github.com/wouterkool/stochastic-beam-search): Stochastic beam-search methodology and reference implementation.
-- [APEX Pathogen] (https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
+- [APEX Pathogen](https://gitlab.com/machine-biology-group-public/apex-pathogen): Antimicrobial activity prediction model used to estimate pathogen-specific MIC values and guide SILO optimization.
 - [OmegAMP](https://github.com/szczurek-lab/OmegAMP.git): AMP classification and likelihood scoring for generated peptide sequences.
 - [AMP Challenge 2027](https://github.com/szczurek-lab/amp-challenge-2027): Competition resources and submission specifications.
 
